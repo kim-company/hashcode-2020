@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"io"
+	"sort"
 )
 
 func logf(format string, args ...interface{}) {
@@ -33,7 +34,17 @@ type Car struct {
 type Intersection struct {
 	Idx int
 	In map[string]*Street
-	Out map[string]*Street
+}
+
+func (i *Intersection) Incoming() []*Street {
+	streets := make([]*Street, 0, len(i.In))
+	for _, v := range i.In {
+		streets = append(streets, v)
+	}
+	sort.SliceStable(streets, func(i, j int) bool {
+		return streets[i].HottestAt() < streets[i].HottestAt()
+	})
+	return streets
 }
 
 type Street struct {
@@ -43,8 +54,27 @@ type Street struct {
 	S *Intersection
 	E *Intersection
 	L int // Length of the street (t required to cross it)
+	First int // When the first car hits this point ever.
+	Hotness []int
 
 	score float64
+}
+
+func (s *Street) HottestAt() int {
+	var max, maxi, rise, risei int
+	for i, v := range s.Hotness {
+		if v > max {
+			maxi, max = i, v
+		}
+	}
+	rise, risei = max, maxi
+	for i := maxi; i > 0; i-- {
+		if s.Hotness[i] > rise {
+			break
+		}
+		risei--
+	}
+	return risei
 }
 
 func Encode(w io.Writer, ii []*Intersection) {
@@ -52,7 +82,7 @@ func Encode(w io.Writer, ii []*Intersection) {
 	for _, i := range ii {
 		fmt.Fprintf(w, "%d\n", i.Idx)
 		fmt.Fprintf(w, "%d\n", len(i.In))
-		for _, s := range i.In {
+		for _, s := range i.Incoming() {
 			fmt.Fprintf(w, "%s %d\n", s.Name, s.T)
 		}
 	}
@@ -82,7 +112,6 @@ func main() {
 		inter[i] = &Intersection{
 			Idx: i,
 			In: make(map[string]*Street),
-			Out: make(map[string]*Street),
 		}
 	}
 
@@ -91,14 +120,13 @@ func main() {
 		var name string
 		var start, end, l int
 		must(fmt.Fscanln(in, &start, &end, &name, &l))
-		// Here we add more info to the intersections.
 		streets[name] = &Street{
 			Name: name,
 			S: inter[start],
 			E: inter[end],
 			L: l,
+			Hotness: make([]int, d),
 		}
-		inter[start].Out[name] = streets[name]
 		inter[end].In[name] = streets[name]
 	}
 
@@ -121,14 +149,23 @@ func main() {
 	logf("Intersections: %d", ni)
 
 	for _, c := range cars {
-		for _, s := range c.Roadmap {
-			streets[s].N++
+		t := 0
+		for _, n := range c.Roadmap {
+			s := streets[n]
+			s.N++
+			for i := t; i < t+s.L; i++ {
+				if i >= len(s.Hotness) {
+					break
+				}
+				s.Hotness[i]++
+			}
+			t += s.L
 		}
 	}
 	for _, i := range inter {
 		remove := make([]string, 0, len(i.In))
 		for _, s := range i.In {
-			if s.N == 0 {
+			if s.N <= 0 {
 				remove = append(remove, s.Name)
 			}
 		}
