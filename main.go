@@ -25,7 +25,6 @@ func must(n int, err error) {
 	}
 }
 
-
 type Car struct {
 	Roadmap []string
 	Tripd int // Trip duration
@@ -38,9 +37,9 @@ type Intersection struct {
 }
 
 type Street struct {
+	Name string
 	T int // Time the semaphore is green on this street
 	N int // Number of cars passing trough this point potentially
-	Name string
 	S *Intersection
 	E *Intersection
 	L int // Length of the street (t required to cross it)
@@ -154,7 +153,7 @@ func main() {
 	}
 	valid := make([]*Intersection, 0, len(inter))
 	for _, i := range inter {
-		if len(i.In) == 0 {
+		if len(i.In) > 0 {
 			valid = append(valid, i)
 		}
 	}
