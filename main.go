@@ -42,7 +42,7 @@ func (i *Intersection) Incoming() []*Street {
 		streets = append(streets, v)
 	}
 	sort.SliceStable(streets, func(i, j int) bool {
-		return streets[i].HottestAt() < streets[i].HottestAt()
+		return streets[i].HottestAt() < streets[j].HottestAt()
 	})
 	return streets
 }

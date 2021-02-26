@@ -1,4 +1,5 @@
 *.tgz
-*.txt
+*.out.txt
+*.high
 doit
 .DS_Store
