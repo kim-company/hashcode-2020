@@ -1,4 +1,4 @@
-### KIM's solution to Google Hashcode 2020
+### KIM's solution to Google Hashcode 2021
 This is what we made in the three ours we had. Not even close to the best
 scores, still we like the implementation and solution we're heading to!
 
